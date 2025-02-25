@@ -14,8 +14,23 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Class NewsService
+ *
+ * This service class handles operations related to fetching news articles,
+ * including applying various filters like keyword, category, source, author,
+ * and publication date. It also manages user preferences for personalized article retrieval.
+ *
+ * @package App\Services
+ */
 class NewsService
 {
+    /**
+     * Get articles based on the provided filters.
+     *
+     * @param ArticleFiltersRequest $request The request object containing filter parameters.
+     * @return \Illuminate\Http\JsonResponse A JSON response containing the filtered articles.
+     */
     public function getArticles(ArticleFiltersRequest $request)
     {
         $keyword = $request->keyword;
@@ -34,7 +49,6 @@ class NewsService
                 return $query->where('category_id', $category);
             })
             ->when($source, function ($query) use ($source) {
-
                 return $query->where('source_id', $source);
             })
             ->when($author, function ($query) use ($author) {
@@ -51,13 +65,18 @@ class NewsService
             'success' => true,
             'data' => $articles,
         ], 200);
-
     }
 
-
+    /**
+     * Get articles based on user preferences.
+     *
+     * @param Request $request The incoming request object.
+     * @return \Illuminate\Http\JsonResponse A JSON response with user-specific articles or an error.
+     */
     public function getArticlesByPreferences(Request $request)
     {
-        //get user by request
+        // This function requires authentication
+        // Get user by request
         /* @var User $user */
         $user = $request->user();
         if (!$user) {
