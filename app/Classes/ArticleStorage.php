@@ -26,7 +26,9 @@ class ArticleStorage implements PipelineStep
     /**
      * ArticleStorage constructor.
      *
-     * @param ArticleBuilder $articleBuilder An instance of ArticleBuilder.
+     * Initializes the ArticleBuilder instance for storing articles.
+     *
+     * @param ArticleBuilder $articleBuilder An instance of ArticleBuilder (optional).
      */
     public function __construct()
     {

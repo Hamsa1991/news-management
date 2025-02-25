@@ -31,9 +31,6 @@ class ArticlePipeline
     /**
      * Processes the data through all the steps in the pipeline.
      *
-     * The method iterates over each step, executing it with the current data.
-     * If any step returns null, the processing will stop.
-     *
      * @param array $data The initial data to be processed by the pipeline.
      * @return array|null The processed data after passing through the pipeline,
      *                    or null if processing was stopped by a step.

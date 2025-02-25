@@ -7,6 +7,7 @@ use App\Models\Article;
 use App\Models\Author;
 use App\Models\Category;
 use App\Models\Source;
+use App\Models\User;
 use App\Models\UserSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -57,7 +58,12 @@ class NewsService
     public function getArticlesByPreferences(Request $request)
     {
         //get user by request
-        //$user = $request->user();
+        /* @var User $user */
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+
         //assume there is authentication then retrieve the user
         //then retrieve its preferences
 

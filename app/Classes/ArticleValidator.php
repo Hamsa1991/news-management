@@ -1,33 +1,32 @@
 <?php
 
-
 namespace App\Classes;
 
-
 use App\Models\Article;
+use Illuminate\Support\Facades\Validator;
 
+/**
+ * Class ArticleValidator
+ *
+ * This class is responsible for validating articles and filtering out duplicates.
+ * It implements the PipelineStep interface, allowing it to be used in a pipeline for processing articles.
+ *
+ * @package App\Classes
+ */
 class ArticleValidator implements PipelineStep
 {
-    protected $existingTitles;
-
-    public function __construct()
-    {
-        // Fetch existing titles from the database once at instantiation
-        $this->existingTitles = Article::pluck('title', 'published_at')->toArray();
-    }
 
     /**
      * Validates articles and filters out duplicates.
      *
-     * @param array $articles
-     * @return array
+     * @param array $articles An array of articles to validate.
+     * @return array An array of validated articles with duplicates removed.
      */
     public function execute($articles)
     {
         $validatedArticles = [];
 
         foreach ($articles as $article) {
-
             $validatedArticle = $this->validate($article);
             if (!$this->isDuplicate($validatedArticle)) {
                 $validatedArticles[] = $article;
@@ -38,53 +37,52 @@ class ArticleValidator implements PipelineStep
     }
 
     /**
-     * Checks if the article is a duplicate.
+     * Checks if the article is a duplicate based on its title and published date.
      *
-     * @param array $article
-     * @return bool
+     * @param array $article The article to check for duplicates.
+     * @return bool True if the article is a duplicate, false otherwise.
      */
-    private function isDuplicate(array $article)
+    private function isDuplicate($article)
     {
-        if($article) {
-            $key = $article['title'] . '|' . $article['published_at']; // Create a unique key for comparison
-            return array_key_exists($key, $this->existingTitles);
-            
-//            return Article::where('title', $article['title'])
-//                ->whereDate('published_at', $article['published_at'])
-//                ->exists();
+        if ($article) {
+            return Article::where('title', $article['title'])
+                ->whereDate('published_at', $article['published_at'])
+                ->exists();
         }
         return true;
     }
 
+    /**
+     * Validates and sanitizes article data.
+     *
+     * @param array $data The article data to validate.
+     * @return array|null The validated article data or null if validation fails.
+     */
     private function validate($data)
     {
-        $validator = Validator::make($data, [
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'content' => 'nullable|string',
-            'url' => 'required|url',
-            'image_url' => 'nullable|url',
-            'category' => 'nullable|string|max:255',
-            'source' => 'nullable|string|max:255',
-            'authors' => 'nullable|string|max:255',
-            'published_at' => 'required|date',
-        ]);
-
-        if ($validator->fails()) {
-            return null; // Return null if validation fails
-        }
-
-        // Sanitize the validated data
-        $data = $validator->validated();
-
         $data['title'] = strip_tags($data['title']);
         $data['description'] = strip_tags($data['description']);
         $data['content'] = strip_tags($data['content']);
         $data['url'] = filter_var($data['url'], FILTER_SANITIZE_URL);
+
+        if (!$data['title'] || !$data['url']) { // Don't store article if one of these values is null
+            return null;
+        }
+
         $data['image_url'] = isset($data['image_url']) ? filter_var($data['image_url'], FILTER_SANITIZE_URL) : null;
+
+        if (!filter_var($data['image_url'], FILTER_VALIDATE_URL)) {
+            $data['image_url'] = null; // Set to null if it’s not a valid URL
+        }
+
         $data['category'] = isset($data['category']) ? strip_tags($data['category']) : null;
         $data['source'] = isset($data['source']) ? strip_tags($data['source']) : null;
-        $data['authors'] = isset($data['authors']) ? strip_tags($data['authors']) : null;
+
+        if (isset($data['authors'])) {
+            foreach ($data['authors'] as &$author) {
+                $author = strip_tags($author);
+            }
+        }
 
         return $data;
     }

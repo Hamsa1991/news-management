@@ -16,6 +16,7 @@ use App\Classes\TransformArticles\NewsApiTransformer;
 use App\Classes\TransformArticles\NewsIoTransformer;
 use App\Classes\TransformArticles\NewyorkTimesApiTransformer;
 use App\Exceptions\ArticlesNotFoundException;
+use App\Exceptions\fetchArticlesException;
 use App\Exceptions\StorageException;
 use App\Exceptions\TransformationException;
 use Illuminate\Console\Command;
@@ -46,15 +47,15 @@ class fetchNewsArticles extends Command
 
             // Create an array of api clients and  transformers
             $clients = [
-//                new NewsApiClient(),
-//                new GuardianNewsApiClient(),
-//                new NewsIoClient(),
+                new NewsApiClient(),
+                new GuardianNewsApiClient(),
+                new NewsIoClient(),
                 new NewyorkTimesApiClient()
             ];
             $transformers = [
-//                new NewsApiTransformer(),
-//                new GuardianNewsTransformer(),
-//                new NewsIoTransformer(),
+                new NewsApiTransformer(),
+                new GuardianNewsTransformer(),
+                new NewsIoTransformer(),
                 new NewyorkTimesApiTransformer()
             ];
 
@@ -71,25 +72,18 @@ class fetchNewsArticles extends Command
 
             //article pipeline execute
             $data = $articlesPipeline->process();
-            if ($data == null) {
-                Log::info("No new Articles fetched");
-            } else {
-                Log::info('Processed: ' . count($data) . ' articles.');
-            }
         } catch (ArticlesNotFoundException $exception) {
             Log::error("No articles retrieved: " . $exception->getMessage());
             throw $exception;
         } catch (fetchArticlesException $exception) {
-            Log::error("Error in fetching News api articles: " . $exception->getMessage());
-            throw $exception;
+            Log::error("Error in fetching News api articles: " . $exception->getMessage() . " file " . $exception->getFile() . " line " . $exception->getLine());
         } catch (TransformationException $exception) {
-            Log::error("Error in transforming articles: " . $exception->getMessage());
-            throw $exception;
+            Log::error("Error in transforming articles: " . $exception->getMessage() . " file " . $exception->getFile() . " line " . $exception->getLine());
         } catch (StorageException $exception) {
-            Log::error("Error in store articles: " . $exception->getMessage());
+            Log::error("Error in store articles: " . $exception->getMessage(). " file " . $exception->getFile() . " line " . $exception->getLine());
             throw $exception;
         } catch (\Exception $exception) {
-            Log::error("Unexpected Error: " . $exception->getMessage());
+            Log::error("Unexpected Error: " . $exception->getMessage(). " file " . $exception->getFile() . " line " . $exception->getLine());
             throw $exception;
         }
     }

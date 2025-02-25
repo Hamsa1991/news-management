@@ -1,25 +1,43 @@
 <?php
 
-
 namespace App\Classes\FetchArticles;
-
 
 use App\Classes\TransformArticles\ArticleTransformInterface;
 use App\Exceptions\fetchArticlesException;
 use App\Exceptions\TransientErrorException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
+/**
+ * Class NewsApiClient
+ *
+ * This class is an implementation of the BaseNewsApiClient specifically for fetching news articles
+ * from a generic news API. It handles retrieval with pagination and error handling.
+ *
+ * @package App\Classes\FetchArticles
+ */
 class NewsApiClient extends BaseNewsApiClient
 {
-    private $pageSize = 20;
-    private $limit = 100;//this limit is required for the api developer mode
+    private $pageSize = 20; // Number of articles to fetch per page
+    private $limit = 100;    // Maximum limit for articles, required for API developer mode
 
+    /**
+     * NewsApiClient constructor.
+     *
+     * Initializes the client with the news API URL obtained from the configuration.
+     */
     public function __construct()
     {
         parent::__construct(config('api.news_api_url'));
     }
 
+    /**
+     * Handle the response from the news API.
+     *
+     * @throws \Exception If the API response indicates an error or on failure to fetch articles.
+     * @return array An array of articles fetched from the news API.
+     */
     protected function handleResponse()
     {
         $allArticles = [];
@@ -41,7 +59,7 @@ class NewsApiClient extends BaseNewsApiClient
             $page++;
         } while (count($allArticles) < $totalResults && count($data['articles']) > 0);
 
+        Log::info("Fetched: " . ($allArticles ? count($allArticles) : 0) . " articles from News API at: " . Carbon::now());
         return $allArticles;
-
     }
 }

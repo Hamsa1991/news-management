@@ -1,26 +1,50 @@
 <?php
 
-
 namespace App\Classes\FetchArticles;
-
 
 use App\Exceptions\TransientErrorException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 
+/**
+ * Class BaseNewsApiClient
+ *
+ * This abstract class serves as a base client for fetching news articles from a news API.
+ * It implements a retry mechanism to handle transient errors like network timeouts.
+ * Subclasses should implement the `handleResponse` method to provide specific response handling logic.
+ *
+ * @package App\Classes\FetchArticles
+ */
 abstract class BaseNewsApiClient implements NewsAPIInterface
 {
     protected $url;
-    const MAX_RETRIES = 5; // Maximum attempts
-    const BASE_DELAY = 100; // Base delay in milliseconds
 
+    const MAX_RETRIES = 5; // Maximum number of retry attempts
+    const BASE_DELAY = 100; // Base delay in milliseconds for exponential backoff
+
+    /**
+     * BaseNewsApiClient constructor.
+     *
+     * @param string $url The endpoint URL of the news API.
+     */
     public function __construct(string $url)
     {
         $this->url = $url;
     }
 
+    /**
+     * Handle the response from the news API.
+     *
+     * @return mixed The processed result from the API response.
+     */
     abstract protected function handleResponse();
 
+    /**
+     * Fetch articles from the news API with retry mechanism.
+     *
+     * @throws \Exception If fetching the articles fails after the maximum number of attempts.
+     * @return mixed The articles fetched from the API.
+     */
     public function fetchArticles()
     {
         $attempt = 0;
